@@ -45,7 +45,9 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
     res.on('finish', async () => {
         try {
-            await req.db.end();
+            if (req.db && req.db.connection) {
+                await req.db.end();
+            }
         } catch (error) {
             console.error('Error closing database connection:', error);
         }
@@ -54,16 +56,17 @@ app.use((req, res, next) => {
 });
 
 //routes
+console.log('Setting up routes...');
 app.use("/api/auth", authRoutes);
+console.log('Auth routes registered');
 app.use("/api/messages", messageRoutes);
+console.log('Message routes registered');
 
-
-
-
-
+// Serve static files and handle frontend routing in production
 if(process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
+    // Catch-all route for frontend routing - must be last
     app.get("*", (req, res) => {
         res.sendFile(path.resolve(__dirname, "../frontend", "dist", "index.html"));
     });
