@@ -12,6 +12,16 @@ import path from "path";
 
 dotenv.config();
 
+// Handle unhandled promise rejections and errors
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // Don't exit, let the app continue running
+});
+
 //middleware
 app.use(express.json());
 app.use(cookieParser());
@@ -67,9 +77,7 @@ const createDbConnection = () => {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
         port: process.env.DB_PORT || 3306,
-        connectTimeout: 30000, // 30 seconds
-        acquireTimeout: 30000,
-        timeout: 30000,
+        connectTimeout: 60000, // 60 seconds
         ssl: false, // Disable SSL for Railway proxy
         multipleStatements: false,
     };
@@ -103,7 +111,13 @@ const startServer = async () => {
             console.error('Database connection error:', err);
         });
         
-        await db.query('SELECT 1');
+        // Set a timeout for the connection attempt
+        const connectionPromise = db.query('SELECT 1');
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Connection timeout')), 60000);
+        });
+        
+        await Promise.race([connectionPromise, timeoutPromise]);
         console.log("Connected to MySQL database");
         
         // Close the test connection
