@@ -54,7 +54,10 @@ const startServer = async () => {
         });
     } catch (error) {
         console.error('Database connection failed:', error);
-        process.exit(1);
+        console.log('Retrying database connection in 5 seconds...');
+        
+        // Retry connection after 5 seconds instead of crashing
+        setTimeout(startServer, 5000);
     }
 };
 
