@@ -61,16 +61,27 @@ if(process.env.NODE_ENV === "production") {
 
 // Create a fresh database connection
 const createDbConnection = () => {
-    return mysql.createConnection({
+    const connectionConfig = {
         host: process.env.DB_HOST,
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
         port: process.env.DB_PORT || 3306,
-        connectTimeout: 10000, // 10 seconds
-        acquireTimeout: 10000,
-        timeout: 10000,
-    }).promise();
+        connectTimeout: 30000, // 30 seconds
+        acquireTimeout: 30000,
+        timeout: 30000,
+        ssl: false, // Disable SSL for Railway proxy
+        multipleStatements: false,
+    };
+    
+    console.log('Creating connection with config:', {
+        host: connectionConfig.host,
+        user: connectionConfig.user,
+        database: connectionConfig.database,
+        port: connectionConfig.port
+    });
+    
+    return mysql.createConnection(connectionConfig).promise();
 };
 
 // Connect to database first, then start server
@@ -86,6 +97,12 @@ const startServer = async () => {
         
         // Create a fresh connection and test it
         const db = createDbConnection();
+        
+        // Add error event handler to prevent unhandled errors
+        db.connection.on('error', (err) => {
+            console.error('Database connection error:', err);
+        });
+        
         await db.query('SELECT 1');
         console.log("Connected to MySQL database");
         
