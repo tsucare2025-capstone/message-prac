@@ -2,7 +2,8 @@ import express from "express";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import dotenv from "dotenv";
-import { db } from "./lib/db.js";
+import mysql from "mysql2";
+import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { app, server } from "./lib/socket.js";
@@ -25,6 +26,24 @@ const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
 
+// Create a middleware to provide fresh database connections
+app.use((req, res, next) => {
+    req.db = createDbConnection();
+    next();
+});
+
+// Cleanup middleware to close database connections
+app.use((req, res, next) => {
+    res.on('finish', async () => {
+        try {
+            await req.db.end();
+        } catch (error) {
+            console.error('Error closing database connection:', error);
+        }
+    });
+    next();
+});
+
 //routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
@@ -41,12 +60,27 @@ if(process.env.NODE_ENV === "production") {
     });
 }
 
+// Create a fresh database connection
+const createDbConnection = () => {
+    return mysql.createConnection({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        port: process.env.DB_PORT || 3306,
+    }).promise();
+};
+
 // Connect to database first, then start server
 const startServer = async () => {
     try {
-        // Test the database connection
+        // Create a fresh connection and test it
+        const db = createDbConnection();
         await db.query('SELECT 1');
         console.log("Connected to MySQL database");
+        
+        // Close the test connection
+        await db.end();
         
         // Start server only after successful database connection
         server.listen(PORT, () => {

@@ -1,4 +1,3 @@
-import { db } from "../lib/db.js";
 import { getReceiverSocketId, io} from "../lib/socket.js";
 
 export const getUsersForSidebar = async (req, res) => {
@@ -14,7 +13,7 @@ export const getUsersForSidebar = async (req, res) => {
         const query = 'SELECT counselorID as _id, name, email FROM counselor WHERE counselorID != ?';
        // console.log('Executing query:', query, 'with params:', [loggedInUser.counselorID]);
         
-        const [results] = await db.query(query, [loggedInUser.counselorID]);
+        const [results] = await req.db.query(query, [loggedInUser.counselorID]);
         //console.log('Users found:', results);
         res.status(200).json(results);
         
@@ -29,7 +28,7 @@ export const getMessages = async (req, res) => {
         const { userId: userToChatWithId } = req.params;
         const loggedInUserId = req.counselor.counselorID;
 
-        const [messages] = await db.query("SELECT * FROM messages WHERE (counselorID = ? AND studentID = ?) OR (counselorID = ? AND studentID = ?) ORDER BY timestamp", [loggedInUserId, userToChatWithId, userToChatWithId, loggedInUserId]);
+        const [messages] = await req.db.query("SELECT * FROM messages WHERE (counselorID = ? AND studentID = ?) OR (counselorID = ? AND studentID = ?) ORDER BY timestamp", [loggedInUserId, userToChatWithId, userToChatWithId, loggedInUserId]);
         res.status(200).json(messages);
     } catch (error) {
         console.error("Error fetching messages:", error);
@@ -45,7 +44,7 @@ export const sendMessage = async (req, res) => {
 
         // Insert the message into database using correct column names
         const query = 'INSERT INTO messages (counselorID, studentID, text, timestamp) VALUES (?, ?, ?, NOW())';
-        const [result] = await db.query(query, [senderId, userToChatWithId, message]);
+        const [result] = await req.db.query(query, [senderId, userToChatWithId, message]);
 
         // Create the response object
         const newMessage = {

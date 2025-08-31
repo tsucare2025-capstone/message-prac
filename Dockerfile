@@ -21,7 +21,7 @@ COPY . .
 RUN npm run build --prefix frontend
 
 # Expose port
-EXPOSE 3000
+EXPOSE $PORT
 
 # Start the application
 CMD ["npm", "run", "start"]

@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import { db } from "../lib/db.js";
 import { generateToken } from "../lib/utils.js";
 import jwt from "jsonwebtoken";
 
@@ -17,7 +16,7 @@ export const signup = async (req, res) => {
         }
 
         // Check if counselor already exists
-        const [existingCounselor] = await db.query("SELECT * FROM counselor WHERE email = ?", [email]);
+        const [existingCounselor] = await req.db.query("SELECT * FROM counselor WHERE email = ?", [email]);
         if (existingCounselor.length > 0) {
             return res.status(400).json({ message: "Counselor already exists" });
         }
@@ -27,7 +26,7 @@ export const signup = async (req, res) => {
 
         // Insert new counselor
         const query = "INSERT INTO counselor (name, email, password) VALUES (?, ?, ?)";
-        const [newCounselor] = await db.query(query, [name, email, hashpassword]);
+        const [newCounselor] = await req.db.query(query, [name, email, hashpassword]);
         
         if (newCounselor.insertId) {
             // Generate token
@@ -58,7 +57,7 @@ export const login = async (req, res) => {
         }
 
         // Find counselor by email
-        const [counselors] = await db.query("SELECT * FROM counselor WHERE email = ?", [email]);
+        const [counselors] = await req.db.query("SELECT * FROM counselor WHERE email = ?", [email]);
         if (counselors.length === 0) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
