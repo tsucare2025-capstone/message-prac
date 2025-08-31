@@ -67,12 +67,23 @@ const createDbConnection = () => {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
         port: process.env.DB_PORT || 3306,
+        connectTimeout: 10000, // 10 seconds
+        acquireTimeout: 10000,
+        timeout: 10000,
     }).promise();
 };
 
 // Connect to database first, then start server
 const startServer = async () => {
     try {
+        // Debug: Log connection details (without password)
+        console.log('Attempting to connect to database:', {
+            host: process.env.DB_HOST,
+            user: process.env.DB_USER,
+            database: process.env.DB_NAME,
+            port: process.env.DB_PORT || 3306
+        });
+        
         // Create a fresh connection and test it
         const db = createDbConnection();
         await db.query('SELECT 1');
