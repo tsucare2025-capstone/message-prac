@@ -42,9 +42,16 @@ app.use("/api/messages", messageRoutes);
 console.log('Message routes registered');
 
 // Create a middleware to provide fresh database connections
-app.use((req, res, next) => {
-    req.db = createDbConnection();
-    next();
+app.use(async (req, res, next) => {
+    try {
+        req.db = createDbConnection();
+        // Test the connection before proceeding
+        await req.db.query('SELECT 1');
+        next();
+    } catch (error) {
+        console.error('Database connection failed in middleware:', error);
+        res.status(500).json({ message: 'Database connection failed' });
+    }
 });
 
 // Cleanup middleware to close database connections
@@ -128,6 +135,7 @@ const startServer = async () => {
         // Start server only after successful database connection
         server.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
+            console.log('Database connection test successful - server ready');
         });
     } catch (error) {
         console.error('Database connection failed:', error);
