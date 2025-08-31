@@ -23,5 +23,9 @@ RUN npm run build --prefix frontend
 # Expose port
 EXPOSE $PORT
 
+# Add debugging
+RUN echo "Current directory: $(pwd)" && ls -la
+RUN echo "Backend package.json:" && cat backend/package.json
+
 # Start the application
-CMD ["npm", "run", "start"]
+CMD ["sh", "-c", "echo 'Starting application...' && npm run start"]
