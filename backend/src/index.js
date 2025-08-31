@@ -72,8 +72,12 @@ app.use((req, res, next) => {
 if(process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-    // Catch-all route for frontend routing - must be last
+    // Catch-all route for frontend routing - must be last and more specific
     app.get("*", (req, res) => {
+        // Don't interfere with API routes
+        if (req.path.startsWith('/api/')) {
+            return res.status(404).json({ message: 'API endpoint not found' });
+        }
         res.sendFile(path.resolve(__dirname, "../frontend", "dist", "index.html"));
     });
 }
